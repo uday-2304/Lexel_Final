@@ -1,10 +1,28 @@
+require('dotenv').config();
 const WebSocket = require('ws');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
-// Enable LevelDB persistence for y-websocket before requiring utils
-process.env.YPERSISTENCE = './dbDir';
-const { setupWSConnection } = require('y-websocket/bin/utils');
+
+const { setupWSConnection, setPersistence } = require('y-websocket/bin/utils');
+
+// Configure MongoDB Persistence if a URI is provided
+if (process.env.MONGODB_URI) {
+  const { MongodbPersistence } = require('y-mongodb-provider');
+  const mdb = new MongodbPersistence(process.env.MONGODB_URI, {
+    collectionName: 'lexel-documents',
+    flushSize: 100,
+    multipleCollections: true
+  });
+
+  setPersistence({
+    bindState: async (docName, ydoc) => mdb.bindState(docName, ydoc),
+    writeState: async (docName, ydoc) => mdb.writeState(docName, ydoc)
+  });
+  console.log("Connected to MongoDB for data persistence.");
+} else {
+  console.log("Running in memory-only mode. Set MONGODB_URI to enable persistence.");
+}
 
 const app = express();
 app.use(cors());
