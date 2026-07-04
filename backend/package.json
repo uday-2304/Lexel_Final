@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env HOST=0.0.0.0 PORT=1234 node ./node_modules/y-websocket/bin/server.js",
+    "start": "cross-env HOST=0.0.0.0 PORT=1234 YPERSISTENCE=./dbDir node ./node_modules/y-websocket/bin/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,6 +15,7 @@
     "cross-env": "^10.1.0",
     "express": "^5.2.1",
     "ws": "^8.21.0",
+    "y-leveldb": "^0.2.0",
     "y-websocket": "^1.5.4",
     "yjs": "^13.6.31"
   }

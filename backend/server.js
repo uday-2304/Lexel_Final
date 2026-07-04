@@ -2,6 +2,8 @@ const WebSocket = require('ws');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+// Enable LevelDB persistence for y-websocket before requiring utils
+process.env.YPERSISTENCE = './dbDir';
 const { setupWSConnection } = require('y-websocket/bin/utils');
 
 const app = express();
