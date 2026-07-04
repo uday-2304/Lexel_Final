@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [name, setName] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [isValidating, setIsValidating] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const router = useRouter()
 
   const [isSetupMode, setIsSetupMode] = useState(false)
@@ -47,13 +48,15 @@ export default function LoginPage() {
 
   const handleEnableAI = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrorMsg(null)
+
     if (!name.trim()) {
-      alert("Please enter a name!")
+      setErrorMsg("Please enter a name!")
       return
     }
     
     if (!apiKey.trim()) {
-      alert("Please enter a Gemini API Key to enable AI features!")
+      setErrorMsg("Please enter a Gemini API Key to enable AI features!")
       return
     }
 
@@ -69,7 +72,7 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (!data.valid) {
-        alert(data.error || 'Invalid API Key. Please check and try again.')
+        setErrorMsg(data.error || 'Invalid API Key. Please check and try again.')
         setIsValidating(false)
         return
       }
@@ -91,8 +94,9 @@ export default function LoginPage() {
       } else {
         router.push('/dashboard')
       }
-    } catch (err) {
-      alert('Failed to validate API key. Please try again.')
+    } catch (err: any) {
+      console.error("Validation error:", err)
+      setErrorMsg(err.message || 'Failed to validate API key. Please try again.')
       setIsValidating(false)
     }
   }
@@ -131,6 +135,12 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleEnableAI} className="space-y-5">
+          {errorMsg && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] p-4 rounded-xl flex items-start gap-2 shadow-inner">
+              <span className="font-bold text-red-500 shrink-0 mt-0.5">!</span>
+              <span className="leading-relaxed">{errorMsg}</span>
+            </div>
+          )}
           {/* Name Input */}
           <div>
             <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
