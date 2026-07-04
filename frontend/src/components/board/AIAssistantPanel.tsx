@@ -11,6 +11,7 @@ export default function AIAssistantPanel({ onClose }: { onClose: () => void }) {
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isFullScreen, setIsFullScreen] = useState(false)
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editor = useEditor()
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -54,9 +55,9 @@ export default function AIAssistantPanel({ onClose }: { onClose: () => void }) {
     }).filter(Boolean).join('\n')
   }
 
-  const askAIChat = useChat({ api: '/api/chat', id: 'ask-ai', onError: err => console.error(err) })
-  const workspaceChat = useChat({ api: '/api/chat', id: 'chat-workspace', onError: err => console.error(err) })
-  const explainChat = useChat({ api: '/api/chat', id: 'explain-ideas', onError: err => console.error(err) })
+  const askAIChat = useChat({ api: '/api/chat', id: 'ask-ai', onError: err => setErrorMsg(err.message || 'An error occurred') })
+  const workspaceChat = useChat({ api: '/api/chat', id: 'chat-workspace', onError: err => setErrorMsg(err.message || 'An error occurred') })
+  const explainChat = useChat({ api: '/api/chat', id: 'explain-ideas', onError: err => setErrorMsg(err.message || 'An error occurred') })
 
   const getActiveChat = () => {
     if (activeTab === 'Ask AI') return askAIChat
@@ -102,8 +103,10 @@ export default function AIAssistantPanel({ onClose }: { onClose: () => void }) {
   // Custom submit handler to inject context and api key
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setErrorMsg(null)
+
     if (!apiKey) {
-      alert("Please configure your Gemini API Key on the home page first.")
+      setErrorMsg("Please configure your Gemini API Key on the home page first.")
       return
     }
 
@@ -213,6 +216,14 @@ export default function AIAssistantPanel({ onClose }: { onClose: () => void }) {
               </div>
             </div>
           ))
+        )}
+        
+        {errorMsg && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] p-3 rounded-xl flex items-start gap-2 shadow-inner mx-4">
+            <span className="font-bold text-red-500 shrink-0 mt-0.5">!</span>
+            <span className="leading-relaxed flex-1">{errorMsg}</span>
+            <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-300"><X className="w-4 h-4"/></button>
+          </div>
         )}
         
         {/* Loading Animation */}

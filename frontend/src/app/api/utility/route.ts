@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No models found supporting generateContent for this API key.' }, { status: 400 });
     }
 
-    const preferredOrder = ['gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.0-pro'];
+    const preferredOrder = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
     const fallbackModels: string[] = [];
     
     for (const pref of preferredOrder) {
