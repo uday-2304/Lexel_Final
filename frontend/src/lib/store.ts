@@ -24,12 +24,10 @@ export function saveUserProfile(profile: UserProfile) {
 
 export async function getBoardHistory(): Promise<BoardHistory[]> {
   if (typeof window === 'undefined') return []
-  const apiKey = localStorage.getItem('brainforge_gemini_key')
-  if (!apiKey) return []
+  const apiKey = localStorage.getItem('brainforge_gemini_key') || 'guest'
   try {
-    const res = await fetch(`/api/projects?apiKey=${encodeURIComponent(apiKey)}`, { cache: 'no-store' })
-    const data = await res.json()
-    return data.projects || []
+    const data = localStorage.getItem(`lexel_projects_${apiKey}`)
+    return data ? JSON.parse(data) : []
   } catch {
     return []
   }
@@ -37,27 +35,32 @@ export async function getBoardHistory(): Promise<BoardHistory[]> {
 
 export async function saveToBoardHistory(board: Omit<BoardHistory, 'lastOpened'>) {
   if (typeof window === 'undefined') return
-  const apiKey = localStorage.getItem('brainforge_gemini_key')
-  if (!apiKey) return
+  const apiKey = localStorage.getItem('brainforge_gemini_key') || 'guest'
   
   try {
-    await fetch('/api/projects', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey, board })
-    })
+    const history = await getBoardHistory()
+    const existingIndex = history.findIndex(b => b.id === board.id)
+    
+    if (existingIndex >= 0) {
+      history[existingIndex] = { ...history[existingIndex], ...board, lastOpened: Date.now() }
+    } else {
+      history.unshift({ ...board, lastOpened: Date.now() })
+    }
+    
+    // Keep only last 15 projects
+    const trimmed = history.slice(0, 15)
+    localStorage.setItem(`lexel_projects_${apiKey}`, JSON.stringify(trimmed))
   } catch {}
 }
 
 export async function removeBoardFromHistory(boardId: string) {
   if (typeof window === 'undefined') return
-  const apiKey = localStorage.getItem('brainforge_gemini_key')
-  if (!apiKey) return
+  const apiKey = localStorage.getItem('brainforge_gemini_key') || 'guest'
   
   try {
-    await fetch(`/api/projects?apiKey=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(boardId)}`, {
-      method: 'DELETE'
-    })
+    const history = await getBoardHistory()
+    const filtered = history.filter(b => b.id !== boardId)
+    localStorage.setItem(`lexel_projects_${apiKey}`, JSON.stringify(filtered))
   } catch {}
 }
 
