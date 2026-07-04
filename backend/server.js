@@ -3,6 +3,7 @@ const WebSocket = require('ws');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const Y = require('yjs');
 
 const { setupWSConnection, setPersistence } = require('y-websocket/bin/utils');
 
@@ -16,8 +17,26 @@ if (process.env.MONGODB_URI) {
   });
 
   setPersistence({
-    bindState: async (docName, ydoc) => mdb.bindState(docName, ydoc),
-    writeState: async (docName, ydoc) => mdb.writeState(docName, ydoc)
+    bindState: async (docName, ydoc) => {
+      try {
+        const persistedYdoc = await mdb.getYDoc(docName);
+        const newUpdates = Y.encodeStateAsUpdate(persistedYdoc);
+        Y.applyUpdate(ydoc, newUpdates);
+
+        ydoc.on('update', async (update) => {
+          mdb.storeUpdate(docName, update);
+        });
+      } catch (err) {
+        console.error('Error binding state to MongoDB:', err);
+      }
+    },
+    writeState: async (docName, ydoc) => {
+      try {
+        await mdb.flushDocument(docName);
+      } catch (err) {
+        console.error('Error flushing document to MongoDB:', err);
+      }
+    }
   });
   console.log("Connected to MongoDB for data persistence.");
 } else {
