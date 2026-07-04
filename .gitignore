@@ -9,6 +9,7 @@ frontend/node_modules/
 
 # Database
 backend/dbDir/
+frontend/db.json
 
 # Logs
 logs/
