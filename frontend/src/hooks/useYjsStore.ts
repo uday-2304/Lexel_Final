@@ -44,8 +44,9 @@ export function useYjsStore({
       shapeUtils: [...defaultShapeUtils, ...shapeUtils],
     })
 
-    yMap.observe((event) => {
+    yMap.observe((event, transaction) => {
       if (hasUnmounted) return
+      if (transaction.local) return
       const changes: any = { added: {}, updated: {}, removed: {} }
       event.changes.keys.forEach((change, key) => {
         if (change.action === 'add') changes.added[key] = yMap.get(key)!
