@@ -5,6 +5,7 @@ import 'tldraw/tldraw.css'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { TLStoreWithStatus } from 'tldraw'
+import { useYjsStore } from '@/hooks/useYjsStore'
 import BoardHeader from './board/BoardHeader'
 import CustomToolbar from './board/CustomToolbar'
 import RightToolbar from './board/RightToolbar'
@@ -35,14 +36,18 @@ if (typeof console !== 'undefined') {
 }
 
 export default function Whiteboard({ 
-  storeWithStatus,
   userProfile,
   boardId
 }: { 
-  storeWithStatus: TLStoreWithStatus
   userProfile: { name: string; color: string } | null
   boardId: string
 }) {
+  const { storeWithStatus, activeUsers } = useYjsStore({
+    roomId: boardId,
+    hostUrl: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:1234',
+    userProfile: userProfile || undefined
+  })
+
   const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [editor, setEditor] = useState<Editor | null>(null)
