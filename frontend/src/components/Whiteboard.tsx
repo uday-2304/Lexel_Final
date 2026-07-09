@@ -129,6 +129,7 @@ export default function Whiteboard({
         store={storeWithStatus} 
         onMount={handleMount}
         hideUi
+        licenseKey="dummy-free-license-key-to-prevent-timeout"
       >
         <BoardHeader boardId={boardId} />
         <CustomToolbar />
