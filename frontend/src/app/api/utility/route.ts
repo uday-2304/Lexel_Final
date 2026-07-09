@@ -23,29 +23,22 @@ export async function POST(req: Request) {
       systemPrompt = 'You are a helpful assistant. Generate a concise, useful text response based on the user prompt. This text will be placed on a whiteboard.';
     }
 
-    const fallbackModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
-
-    let lastError: any;
     let finalResultText: string | null = null;
 
-    for (const modelName of fallbackModels) {
-      try {
-        const { text } = await generateText({
-          model: google(modelName),
-          system: systemPrompt,
-          prompt: prompt,
-        });
-        finalResultText = text;
-        break; // Success!
-      } catch (err: any) {
-        console.warn(`Model ${modelName} failed:`, err.message);
-        lastError = err;
-        continue; // Try next model
-      }
+    try {
+      const { text } = await generateText({
+        model: google('gemini-1.5-flash'),
+        system: systemPrompt,
+        prompt: prompt,
+        maxRetries: 0,
+      });
+      finalResultText = text;
+    } catch (err: any) {
+      throw new Error(`Gemini API Error: ${err.message}`);
     }
 
     if (!finalResultText) {
-      throw lastError || new Error("All preferred models failed due to rate limits or unavailability.");
+      throw new Error("Failed to generate text.");
     }
 
     return NextResponse.json({ result: finalResultText.trim() });

@@ -96,29 +96,21 @@ export async function POST(req: Request) {
       }
     }
 
-    const fallbackModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
-
-    let lastError: any;
     let resultStream: any = null;
 
-    for (const modelName of fallbackModels) {
-      try {
-        const result = await streamText({
-          model: google(modelName),
-          messages: allMessages as any,
-          temperature: 0.7,
-        });
-        resultStream = result;
-        break; // Success!
-      } catch (err: any) {
-        console.warn(`Model ${modelName} failed:`, err.message);
-        lastError = err;
-        continue; // Try next model
-      }
+    try {
+      resultStream = await streamText({
+        model: google('gemini-1.5-flash'),
+        messages: allMessages as any,
+        temperature: 0.7,
+        maxRetries: 0,
+      });
+    } catch (err: any) {
+      throw new Error(`Gemini API Error: ${err.message}`);
     }
 
     if (!resultStream) {
-      throw lastError || new Error("All preferred models failed due to rate limits or unavailability.");
+      throw new Error("Failed to start AI stream.");
     }
 
     return resultStream.toDataStreamResponse();
