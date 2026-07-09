@@ -2,7 +2,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
