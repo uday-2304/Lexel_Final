@@ -72,31 +72,29 @@ export default function Whiteboard({
 
   // Periodic Thumbnail Generation
   useEffect(() => {
-    if (!editor || !mounted || boardId.startsWith('board-guest-')) return
-    
-    const interval = setInterval(async () => {
-      try {
-        // Skip background generation if the user is actively drawing, panning, or interacting
-        if (editor.inputs.isDragging || editor.inputs.isPointing) return
-        
-        const shapeIds = Array.from(editor.getCurrentPageShapeIds())
-        if (shapeIds.length === 0) return
-        
-        const result = await editor.getSvgString(shapeIds, {
-          padding: 32,
-          background: true
-        })
-        
-        if (result?.svg) {
-          const svgUrl = `data:image/svg+xml;utf8,${encodeURIComponent(result.svg)}`
-          localStorage.setItem(`lexel_thumb_${boardId}`, svgUrl)
-        }
-      } catch (e) {
-        // Ignore errors during export (e.g. concurrent operations)
-      }
-    }, 10000) // Every 10 seconds to prevent drawing stutter
-    
-    return () => clearInterval(interval)
+    // TEMPORARILY DISABLED to test if getSvgString is causing the production crash!
+    // if (!editor || !mounted || boardId.startsWith('board-guest-')) return
+    // 
+    // const interval = setInterval(async () => {
+    //   try {
+    //     if (editor.inputs.isDragging || editor.inputs.isPointing) return
+    //     
+    //     const shapeIds = Array.from(editor.getCurrentPageShapeIds())
+    //     if (shapeIds.length === 0) return
+    //     
+    //     const result = await editor.getSvgString(shapeIds, {
+    //       padding: 32,
+    //       background: true
+    //     })
+    //     
+    //     if (result?.svg) {
+    //       const svgUrl = `data:image/svg+xml;utf8,${encodeURIComponent(result.svg)}`
+    //       localStorage.setItem(`lexel_thumb_${boardId}`, svgUrl)
+    //     }
+    //   } catch (e) {}
+    // }, 10000)
+    // 
+    // return () => clearInterval(interval)
   }, [editor, mounted, boardId])
 
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false)
