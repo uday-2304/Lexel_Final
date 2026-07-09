@@ -3,10 +3,11 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-const Whiteboard = dynamic(() => import('@/components/Whiteboard'), { ssr: false })
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { getUserProfile, saveToBoardHistory, UserProfile, getBoardHistory } from '@/lib/store'
 import { useTheme } from 'next-themes'
+
+const Whiteboard = dynamic(() => import('@/components/Whiteboard'), { ssr: false })
 
 export default function BoardPage() {
   const params = useParams()

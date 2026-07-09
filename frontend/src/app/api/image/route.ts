@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 export async function POST(req: Request) {
   try {
     const { prompt, mode } = await req.json();
@@ -10,16 +12,16 @@ export async function POST(req: Request) {
     const encodedQuery = encodeURIComponent(prompt);
     
     if (mode === 'Icon Generator') {
-      let searchRes = await fetch(`https://api.iconify.design/search?query=${encodedQuery}&limit=1&prefixes=lucide,ph,tabler,material-symbols,mdi,fa6-regular,fluent`);
-      let searchData = searchRes.ok ? await searchRes.json() : { icons: [] };
+      let searchRes = await fetch(`https://api.iconify.design/search?query=${encodedQuery}&limit=1&prefixes=lucide,ph,tabler,material-symbols,mdi,fa6-regular,fluent`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
+      let searchData = (searchRes && searchRes.ok) ? await searchRes.json() : { icons: [] };
 
       // Fallback: if no icon found, try searching just the most meaningful word (e.g. last word)
       if (!searchData.icons || searchData.icons.length === 0) {
         const words = prompt.split(' ').filter((w: string) => w.length > 2);
         const fallbackWord = words.pop();
         if (fallbackWord) {
-          searchRes = await fetch(`https://api.iconify.design/search?query=${encodeURIComponent(fallbackWord)}&limit=1&prefixes=lucide,ph,tabler,material-symbols,mdi,fa6-regular,fluent`);
-          searchData = searchRes.ok ? await searchRes.json() : { icons: [] };
+          searchRes = await fetch(`https://api.iconify.design/search?query=${encodeURIComponent(fallbackWord)}&limit=1&prefixes=lucide,ph,tabler,material-symbols,mdi,fa6-regular,fluent`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
+          searchData = (searchRes && searchRes.ok) ? await searchRes.json() : { icons: [] };
         }
       }
 
@@ -29,8 +31,8 @@ export async function POST(req: Request) {
         const svgPromises = topIcon.map(async (iconName: string) => {
           const [prefix, name] = iconName.split(':');
           // Enforce white color via Iconify API
-          const svgRes = await fetch(`https://api.iconify.design/${prefix}/${name}.svg?color=white`);
-          if (svgRes.ok) {
+          const svgRes = await fetch(`https://api.iconify.design/${prefix}/${name}.svg?color=white`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
+          if (svgRes && svgRes.ok) {
             return await svgRes.text();
           }
           return null;
@@ -54,17 +56,17 @@ export async function POST(req: Request) {
     const randomSeed = Math.floor(Math.random() * 100000);
     const imageUrl = `https://image.pollinations.ai/prompt/${encodedImageQuery}?width=512&height=512&nologo=true&seed=${randomSeed}`;
 
-    let response = await fetch(imageUrl);
+    let response = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) }).catch(() => null);
     
     // Simple retry fallback if the server is overloaded
-    if (!response.ok) {
+    if (!response || !response.ok) {
        console.warn("Primary image fetch failed, retrying with new seed...");
        const fallbackSeed = Math.floor(Math.random() * 100000);
        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodedImageQuery}?width=512&height=512&nologo=true&seed=${fallbackSeed}`;
-       response = await fetch(fallbackUrl);
+       response = await fetch(fallbackUrl, { signal: AbortSignal.timeout(15000) }).catch(() => null) as any;
     }
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
       return NextResponse.json({ error: 'AI Image Server is temporarily overloaded. Please try again in a few seconds.' }, { status: 500 });
     }
 

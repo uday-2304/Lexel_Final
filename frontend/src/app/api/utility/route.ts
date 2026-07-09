@@ -2,6 +2,8 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 export async function POST(req: Request) {
   try {
     const { prompt, mode, apiKey } = await req.json();
@@ -21,8 +23,11 @@ export async function POST(req: Request) {
       systemPrompt = 'You are a helpful assistant. Generate a concise, useful text response based on the user prompt. This text will be placed on a whiteboard.';
     }
 
-    const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-    if (!modelsRes.ok) {
+    const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
+      signal: AbortSignal.timeout(5000)
+    }).catch(() => null);
+    
+    if (!modelsRes || !modelsRes.ok) {
       return NextResponse.json({ error: 'Failed to fetch available models. Check your API key.' }, { status: 400 });
     }
     const modelsData = await modelsRes.json();

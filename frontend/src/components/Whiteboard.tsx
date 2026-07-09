@@ -129,6 +129,7 @@ export default function Whiteboard({
         store={storeWithStatus} 
         onMount={handleMount}
         hideUi
+        licenseKey="your-license-key"
       >
         <BoardHeader boardId={boardId} />
         <CustomToolbar />
