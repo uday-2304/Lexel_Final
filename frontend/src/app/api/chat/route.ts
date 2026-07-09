@@ -96,21 +96,27 @@ export async function POST(req: Request) {
       }
     }
 
+    const fallbackModels = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro'];
     let resultStream: any = null;
+    let lastError: any = null;
 
-    try {
-      resultStream = await streamText({
-        model: google('gemini-1.5-flash'),
-        messages: allMessages as any,
-        temperature: 0.7,
-        maxRetries: 0,
-      });
-    } catch (err: any) {
-      throw new Error(`Gemini API Error: ${err.message}`);
+    for (const modelName of fallbackModels) {
+      try {
+        resultStream = await streamText({
+          model: google(modelName),
+          messages: allMessages as any,
+          temperature: 0.7,
+          maxRetries: 0,
+        });
+        break; // Success
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`Model ${modelName} failed:`, err.message);
+      }
     }
 
     if (!resultStream) {
-      throw new Error("Failed to start AI stream.");
+      throw new Error(`Failed to start AI stream. Last error: ${lastError?.message || 'Unknown error'}`);
     }
 
     return resultStream.toDataStreamResponse();
