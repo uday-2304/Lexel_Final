@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Whiteboard from '@/components/Whiteboard'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { getUserProfile, saveToBoardHistory, UserProfile, getBoardHistory } from '@/lib/store'
 import { useYjsStore } from '@/hooks/useYjsStore'
 import { useTheme } from 'next-themes'
@@ -56,7 +57,9 @@ export default function BoardPage() {
   return (
     <main className="w-full h-screen flex overflow-hidden bg-[#000000] transition-colors duration-300">
       <div className="flex-1 relative">
-        <Whiteboard storeWithStatus={storeWithStatus} userProfile={userProfile} boardId={boardId} />
+        <ErrorBoundary>
+          <Whiteboard storeWithStatus={storeWithStatus} userProfile={userProfile} boardId={boardId} />
+        </ErrorBoundary>
       </div>
     </main>
   )
