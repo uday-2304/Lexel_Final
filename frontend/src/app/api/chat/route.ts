@@ -96,11 +96,8 @@ export async function POST(req: Request) {
       }
     }
 
-    const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
-      signal: AbortSignal.timeout(5000)
-    }).catch(() => null);
-    
-    if (!modelsRes || !modelsRes.ok) {
+    const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (!modelsRes.ok) {
       return NextResponse.json({ error: 'Failed to fetch available models. Check your API key.' }, { status: 400 });
     }
     const modelsData = await modelsRes.json();
