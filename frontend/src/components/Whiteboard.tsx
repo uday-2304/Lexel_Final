@@ -18,6 +18,22 @@ import CreativeStudioPanel from './board/CreativeStudioPanel'
 import RepositoryAnalyzerPanel from './board/RepositoryAnalyzerPanel'
 import UtilitiesPanel from './board/UtilitiesPanel'
 
+// Suppress annoying tldraw license warnings in console globally
+if (typeof console !== 'undefined') {
+  const originalConsoleError = console.error;
+  const originalConsoleWarn = console.warn;
+  
+  console.error = (...args: any[]) => {
+    if (args.some(arg => typeof arg === 'string' && (arg.includes('tldraw license') || arg.includes('sales@tldraw.com') || arg.includes('license is required')))) return;
+    originalConsoleError.apply(console, args as any);
+  }
+  
+  console.warn = (...args: any[]) => {
+    if (args.some(arg => typeof arg === 'string' && (arg.includes('tldraw license') || arg.includes('sales@tldraw.com') || arg.includes('license is required')))) return;
+    originalConsoleWarn.apply(console, args as any);
+  }
+}
+
 export default function Whiteboard({ 
   storeWithStatus,
   userProfile,
@@ -33,25 +49,6 @@ export default function Whiteboard({
   
   useEffect(() => {
     setMounted(true)
-    
-    // Suppress annoying tldraw license warnings in console
-    const originalConsoleError = console.error;
-    const originalConsoleWarn = console.warn;
-    
-    console.error = (...args: any[]) => {
-      if (args.some(arg => typeof arg === 'string' && (arg.includes('tldraw license key') || arg.includes('sales@tldraw.com')))) return;
-      originalConsoleError.apply(console, args as any);
-    }
-    
-    console.warn = (...args: any[]) => {
-      if (args.some(arg => typeof arg === 'string' && (arg.includes('tldraw license key') || arg.includes('sales@tldraw.com')))) return;
-      originalConsoleWarn.apply(console, args as any);
-    }
-
-    return () => {
-      console.error = originalConsoleError;
-      console.warn = originalConsoleWarn;
-    }
   }, [])
 
   useEffect(() => {
