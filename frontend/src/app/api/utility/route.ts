@@ -2,7 +2,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { NextResponse } from 'next/server';
 
-export const maxDuration = 60;
+export const runtime = 'edge';
 
 export async function POST(req: Request) {
   try {
@@ -23,31 +23,7 @@ export async function POST(req: Request) {
       systemPrompt = 'You are a helpful assistant. Generate a concise, useful text response based on the user prompt. This text will be placed on a whiteboard.';
     }
 
-    const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-    if (!modelsRes.ok) {
-      return NextResponse.json({ error: 'Failed to fetch available models. Check your API key.' }, { status: 400 });
-    }
-    const modelsData = await modelsRes.json();
-    const availableModels = modelsData.models || [];
-    
-    const generateModels = availableModels.filter((m: any) => 
-      m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
-    ).map((m: any) => m.name.replace('models/', ''));
-
-    if (generateModels.length === 0) {
-      return NextResponse.json({ error: 'No models found supporting generateContent for this API key.' }, { status: 400 });
-    }
-
-    const preferredOrder = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
-    const fallbackModels: string[] = [];
-    
-    for (const pref of preferredOrder) {
-      const matches = generateModels.filter((m: string) => m === pref || m.startsWith(`${pref}-`));
-      fallbackModels.push(...matches);
-    }
-    for (const m of generateModels) {
-      if (!fallbackModels.includes(m)) fallbackModels.push(m);
-    }
+    const fallbackModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
 
     let lastError: any;
     let finalResultText: string | null = null;
