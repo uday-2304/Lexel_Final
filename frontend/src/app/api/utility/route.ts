@@ -23,9 +23,9 @@ export async function POST(req: Request) {
       systemPrompt = 'You are a helpful assistant. Generate a concise, useful text response based on the user prompt. This text will be placed on a whiteboard.';
     }
 
-    const fallbackModels = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro'];
+    const fallbackModels = ['gemini-1.5-flash', 'gemini-1.5-pro'];
     let finalResultText: string | null = null;
-    let lastError: any = null;
+    let errors: string[] = [];
 
     for (const modelName of fallbackModels) {
       try {
@@ -38,13 +38,13 @@ export async function POST(req: Request) {
         finalResultText = text;
         break; // Success
       } catch (err: any) {
-        lastError = err;
+        errors.push(`[${modelName}] ${err.message}`);
         console.warn(`Model ${modelName} failed:`, err.message);
       }
     }
 
     if (!finalResultText) {
-      throw new Error(`Failed to generate text. Last error: ${lastError?.message || 'Unknown error'}`);
+      throw new Error(`Failed to generate text. Errors: ${errors.join(' | ')}`);
     }
 
     return NextResponse.json({ result: finalResultText.trim() });

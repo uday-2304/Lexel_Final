@@ -96,9 +96,9 @@ export async function POST(req: Request) {
       }
     }
 
-    const fallbackModels = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro'];
+    const fallbackModels = ['gemini-1.5-flash', 'gemini-1.5-pro'];
     let resultStream: any = null;
-    let lastError: any = null;
+    let errors: string[] = [];
 
     for (const modelName of fallbackModels) {
       try {
@@ -110,13 +110,13 @@ export async function POST(req: Request) {
         });
         break; // Success
       } catch (err: any) {
-        lastError = err;
+        errors.push(`[${modelName}] ${err.message}`);
         console.warn(`Model ${modelName} failed:`, err.message);
       }
     }
 
     if (!resultStream) {
-      throw new Error(`Failed to start AI stream. Last error: ${lastError?.message || 'Unknown error'}`);
+      throw new Error(`Failed to start AI stream. Errors: ${errors.join(' | ')}`);
     }
 
     return resultStream.toDataStreamResponse();
