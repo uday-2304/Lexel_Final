@@ -23,7 +23,13 @@ export async function POST(req: Request) {
       systemPrompt = 'You are a helpful assistant. Generate a concise, useful text response based on the user prompt. This text will be placed on a whiteboard.';
     }
 
-    const fallbackModels = ['gemini-1.5-flash', 'gemini-1.5-pro'];
+    const fallbackModels = [
+      'gemini-2.0-flash',
+      'gemini-1.5-flash-latest', 
+      'gemini-1.5-pro-latest', 
+      'gemini-1.5-flash', 
+      'gemini-1.5-pro'
+    ];
     let finalResultText: string | null = null;
     let errors: string[] = [];
 

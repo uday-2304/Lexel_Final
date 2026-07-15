@@ -96,7 +96,13 @@ export async function POST(req: Request) {
       }
     }
 
-    const fallbackModels = ['gemini-1.5-flash', 'gemini-1.5-pro'];
+    const fallbackModels = [
+      'gemini-2.0-flash',
+      'gemini-1.5-flash-latest', 
+      'gemini-1.5-pro-latest', 
+      'gemini-1.5-flash', 
+      'gemini-1.5-pro'
+    ];
     let resultStream: any = null;
     let errors: string[] = [];
 
