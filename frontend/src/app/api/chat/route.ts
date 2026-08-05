@@ -97,11 +97,15 @@ export async function POST(req: Request) {
     }
 
     const fallbackModels = [
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.5-pro',
       'gemini-2.0-flash',
-      'gemini-1.5-flash-latest', 
-      'gemini-1.5-pro-latest', 
-      'gemini-1.5-flash', 
-      'gemini-1.5-pro'
+      'gemini-2.0-flash-lite',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-8b',
+      'gemini-1.5-pro',
+      'gemini-2.0-flash-exp'
     ];
     let resultStream: any = null;
     let errors: string[] = [];
@@ -122,12 +126,32 @@ export async function POST(req: Request) {
     }
 
     if (!resultStream) {
-      throw new Error(`Failed to start AI stream. Errors: ${errors.join(' | ')}`);
+      const quotaError = errors.find(e => 
+        e.toLowerCase().includes('quota') || 
+        e.toLowerCase().includes('resource_exhausted') || 
+        e.includes('429')
+      );
+      
+      if (quotaError) {
+        const retryMatch = quotaError.match(/retry in ([0-9.]+)s/i);
+        const retryText = retryMatch 
+          ? ` Please retry in ${Math.ceil(parseFloat(retryMatch[1]))} seconds.` 
+          : ' Please wait a few moments before trying again.';
+        throw new Error(`Gemini API Quota Exceeded: Your Google Gemini API rate limit was reached.${retryText} You can verify your key or quota at https://aistudio.google.com/`);
+      }
+
+      throw new Error(`Failed to connect to AI models. ${errors[0] || 'Please check your API key.'}`);
     }
 
     return resultStream.toDataStreamResponse();
   } catch (error: any) {
     console.error("AI Assistant API Error:", error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    let msg = error.message || 'Internal Server Error';
+    try {
+      const parsed = JSON.parse(msg);
+      if (parsed.error?.message) msg = parsed.error.message;
+      else if (parsed.error) msg = parsed.error;
+    } catch {}
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

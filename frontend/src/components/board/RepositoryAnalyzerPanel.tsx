@@ -10,6 +10,7 @@ export default function RepositoryAnalyzerPanel({ onClose }: { onClose: () => vo
   const [activeTab, setActiveTab] = useState(TABS[0])
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [isFullScreen, setIsFullScreen] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -17,10 +18,20 @@ export default function RepositoryAnalyzerPanel({ onClose }: { onClose: () => vo
     if (key) setApiKey(key)
   }, [])
 
+  const formatErrorMessage = (err: any) => {
+    let msg = err?.message || err || 'An error occurred';
+    try {
+      const parsed = JSON.parse(msg);
+      if (parsed.error?.message) msg = parsed.error.message;
+      else if (parsed.error) msg = parsed.error;
+    } catch {}
+    return msg;
+  }
+
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({ 
     api: '/api/chat', 
     id: 'repo-analyzer',
-    onError: err => console.error(err) 
+    onError: err => setErrorMsg(formatErrorMessage(err)) 
   })
 
   useEffect(() => {
@@ -29,9 +40,10 @@ export default function RepositoryAnalyzerPanel({ onClose }: { onClose: () => vo
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
+    setErrorMsg(null)
     if (!input.trim()) return alert('Please enter a repository URL or path.')
     if (!apiKey) {
-      alert("Please configure your Gemini API Key on the home page first.")
+      setErrorMsg("Please configure your Gemini API Key on the home page first.")
       return
     }
 
@@ -146,6 +158,14 @@ export default function RepositoryAnalyzerPanel({ onClose }: { onClose: () => vo
                 />
               </div>
             </>
+          )}
+
+          {errorMsg && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] p-3 rounded-xl flex items-start gap-2 shadow-inner">
+              <span className="font-bold text-red-500 shrink-0 mt-0.5">!</span>
+              <span className="leading-relaxed flex-1">{errorMsg}</span>
+              <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-300"><X className="w-4 h-4"/></button>
+            </div>
           )}
 
         </div>

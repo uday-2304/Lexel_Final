@@ -82,12 +82,16 @@ export default function UtilitiesPanel({ onClose }: { onClose: () => void }) {
 
         // Connect them with arrows
         flowData.edges.forEach((edge: any, i: number) => {
+          const fromNodeY = flowData.nodes.findIndex((n: any) => n.id === edge.from) * 140 + (editor.getViewportPageBounds().center.y - (flowData.nodes.length * 60))
+          
           shapesToCreate.push({
             id: `shape:arrow-${i}-${Date.now()}`,
             type: 'arrow',
+            x: startX + 100, // middle of the node (width is 200)
+            y: fromNodeY + 80, // bottom of the 'from' node (height is 80)
             props: {
-              start: { type: 'binding', isExact: false, boundShapeId: nodeMap.get(edge.from) },
-              end: { type: 'binding', isExact: false, boundShapeId: nodeMap.get(edge.to) }
+              start: { x: 0, y: 0 },
+              end: { x: 0, y: 60 } // distance to the next node
             }
           })
         })

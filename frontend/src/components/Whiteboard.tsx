@@ -25,12 +25,24 @@ if (typeof console !== 'undefined') {
   const originalConsoleWarn = console.warn;
   
   console.error = (...args: any[]) => {
-    if (args.some(arg => typeof arg === 'string' && (arg.includes('tldraw license') || arg.includes('sales@tldraw.com') || arg.includes('license is required')))) return;
+    if (args.some(arg => typeof arg === 'string' && (
+      arg.includes('tldraw license') || 
+      arg.includes('sales@tldraw.com') || 
+      arg.includes('license is required') ||
+      arg.includes('Invalid tldraw license') ||
+      arg.includes('Unsupported prefix')
+    ))) return;
     originalConsoleError.apply(console, args as any);
   }
   
   console.warn = (...args: any[]) => {
-    if (args.some(arg => typeof arg === 'string' && (arg.includes('tldraw license') || arg.includes('sales@tldraw.com') || arg.includes('license is required')))) return;
+    if (args.some(arg => typeof arg === 'string' && (
+      arg.includes('tldraw license') || 
+      arg.includes('sales@tldraw.com') || 
+      arg.includes('license is required') ||
+      arg.includes('Invalid tldraw license') ||
+      arg.includes('Unsupported prefix')
+    ))) return;
     originalConsoleWarn.apply(console, args as any);
   }
 }
@@ -129,7 +141,6 @@ export default function Whiteboard({
         store={storeWithStatus} 
         onMount={handleMount}
         hideUi
-        licenseKey="dummy-free-license-key-to-prevent-timeout"
       >
         <BoardHeader boardId={boardId} />
         <CustomToolbar />

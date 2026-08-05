@@ -55,9 +55,19 @@ export default function AIAssistantPanel({ onClose }: { onClose: () => void }) {
     }).filter(Boolean).join('\n')
   }
 
-  const askAIChat = useChat({ api: '/api/chat', id: 'ask-ai', onError: err => setErrorMsg(err.message || 'An error occurred') })
-  const workspaceChat = useChat({ api: '/api/chat', id: 'chat-workspace', onError: err => setErrorMsg(err.message || 'An error occurred') })
-  const explainChat = useChat({ api: '/api/chat', id: 'explain-ideas', onError: err => setErrorMsg(err.message || 'An error occurred') })
+  const formatErrorMessage = (err: any) => {
+    let msg = err?.message || err || 'An error occurred';
+    try {
+      const parsed = JSON.parse(msg);
+      if (parsed.error?.message) msg = parsed.error.message;
+      else if (parsed.error) msg = parsed.error;
+    } catch {}
+    return msg;
+  }
+
+  const askAIChat = useChat({ api: '/api/chat', id: 'ask-ai', onError: err => setErrorMsg(formatErrorMessage(err)) })
+  const workspaceChat = useChat({ api: '/api/chat', id: 'chat-workspace', onError: err => setErrorMsg(formatErrorMessage(err)) })
+  const explainChat = useChat({ api: '/api/chat', id: 'explain-ideas', onError: err => setErrorMsg(formatErrorMessage(err)) })
 
   const getActiveChat = () => {
     if (activeTab === 'Ask AI') return askAIChat
