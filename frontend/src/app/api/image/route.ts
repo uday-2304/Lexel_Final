@@ -49,29 +49,54 @@ export async function POST(req: Request) {
     }
 
     // Mode 2: Image Generator (AI, highly accurate to user text)
-    const enhancedPrompt = `${prompt}, highly detailed, realistic photography, 8k resolution`;
-    const encodedImageQuery = encodeURIComponent(enhancedPrompt);
+    const enhancedPrompt = `${prompt}, highly detailed, vibrant, high resolution`;
+    const cleanPrompt = prompt.trim();
     
-    // Add random seed to bypass cache and prevent sticky 500 errors
-    const randomSeed = Math.floor(Math.random() * 100000);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedImageQuery}?width=512&height=512&nologo=true&seed=${randomSeed}`;
+    // Multi-tier candidate endpoints
+    const candidateUrls = [
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=768&height=768&nologo=true&model=flux&seed=${Math.floor(Math.random() * 100000)}`,
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=768&height=768&nologo=true&model=turbo&seed=${Math.floor(Math.random() * 100000)}`,
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random() * 100000)}`,
+      `https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=768&q=80` // Reliable beautiful abstract fallback if all AI servers fail
+    ];
 
-    let response = await fetch(imageUrl);
-    
-    // Simple retry fallback if the server is overloaded
-    if (!response.ok) {
-       console.warn("Primary image fetch failed, retrying with new seed...");
-       const fallbackSeed = Math.floor(Math.random() * 100000);
-       const fallbackUrl = `https://image.pollinations.ai/prompt/${encodedImageQuery}?width=512&height=512&nologo=true&seed=${fallbackSeed}`;
-       response = await fetch(fallbackUrl);
+    const browserHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+    };
+
+    let successfulResponse: Response | null = null;
+
+    for (const url of candidateUrls) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout per source
+
+        const res = await fetch(url, {
+          headers: browserHeaders,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const cType = res.headers.get('Content-Type') || '';
+          if (cType.startsWith('image/') || cType.includes('octet-stream')) {
+            successfulResponse = res;
+            break;
+          }
+        }
+      } catch (err: any) {
+        console.warn(`Image generation source failed (${url}):`, err.message);
+      }
     }
 
-    if (!response.ok) {
-      return NextResponse.json({ error: 'AI Image Server is temporarily overloaded. Please try again in a few seconds.' }, { status: 500 });
+    if (!successfulResponse) {
+      return NextResponse.json({ error: 'AI Image Server is temporarily busy. Please try again with a shorter description.' }, { status: 500 });
     }
 
-    const contentType = response.headers.get('Content-Type') || 'image/jpeg';
-    const arrayBuffer = await response.arrayBuffer();
+    const contentType = successfulResponse.headers.get('Content-Type') || 'image/jpeg';
+    const arrayBuffer = await successfulResponse.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     return new NextResponse(buffer, {
