@@ -48,16 +48,18 @@ export async function POST(req: Request) {
       },
     });
 
-    let systemPrompt = `You are a helpful, creative AI assistant integrated into a collaborative whiteboard called Lexel. Your goal is to help users brainstorm, design, code, and solve problems.
+    let systemPrompt = `You are a helpful, creative, and up-to-date AI assistant integrated into a collaborative whiteboard called Lexel.
 
-CURRENT TIME & KNOWLEDGE INSTRUCTIONS:
+CURRENT TIME & KNOWLEDGE MANDATE:
 - Today's date is: ${currentDate}.
-- You have real-time Google Search grounding enabled and access to modern, up-to-date information.
-- You are NOT restricted to a 2024 knowledge cutoff. Always provide current, fully updated data, modern library versions, and latest insights.`;
-    
+- You have access to modern, up-to-date knowledge up to the present day. Never assume your cutoff is 2024.
+- When answering factual questions about sports, trophies, records, current events, recent releases, or news:
+  * Provide the complete, comprehensive, and up-to-date answer.
+  * For sports franchises (like Royal Challengers Bangalore / RCB, Chelsea, Mumbai Indians, etc.), provide the breakdown across all formats/leagues (e.g., Men's IPL: 0 trophies, Women's WPL: 1 trophy won in WPL 2024).`;
+
     // Project Generator Modes
     if (['Roadmap Document', 'Task Breakdown', 'Project Step-by-Step'].includes(mode)) {
-      systemPrompt = "You are an expert project manager and technical lead.";
+      systemPrompt = `You are an expert project manager and technical lead. Today's date: ${currentDate}.`;
       if (mode === 'Roadmap Document') {
         systemPrompt += "\n\nYour ONLY duty is to provide a high-level roadmap and timeline based on the project context. Do not provide detailed task breakdowns or step-by-step guides. Only provide a roadmap.";
       } else if (mode === 'Task Breakdown') {
@@ -69,9 +71,9 @@ CURRENT TIME & KNOWLEDGE INSTRUCTIONS:
     } 
     // Development Studio Modes
     else if (['Website Generator', 'Code Generator', 'Code Correction & Explanation', 'README Generator'].includes(mode)) {
-      systemPrompt = "You are an expert software engineer and technical lead.";
+      systemPrompt = `You are an expert software engineer and technical lead. Today's date: ${currentDate}. Always use modern syntax, packages, and practices.`;
       if (mode === 'Website Generator') {
-        systemPrompt += "\n\nYour ONLY duty is to generate full, working code for building a website based on the user's prompt. Provide HTML/CSS/JS or framework code. Do not provide unrelated DSA logic or generic text.";
+        systemPrompt += "\n\nYour ONLY duty is to generate full, working code for building a website based on the user's prompt. Provide modern HTML/CSS/JS or framework code. Do not provide unrelated DSA logic or generic text.";
       } else if (mode === 'Code Generator') {
         systemPrompt += "\n\nYour ONLY duty is to generate algorithms, logic, and Data Structures (DSA) code based on the user's prompt. Provide clean, optimized code. Do not build full websites.";
       } else if (mode === 'Code Correction & Explanation') {
@@ -83,21 +85,19 @@ CURRENT TIME & KNOWLEDGE INSTRUCTIONS:
     }
     // Repository Analyzer Mode
     else if (['Repository Analysis'].includes(mode)) {
-      systemPrompt = "You are an expert DevSecOps engineer and Repository Analyzer.";
+      systemPrompt = `You are an expert DevSecOps engineer and Repository Analyzer. Today's date: ${currentDate}.`;
       systemPrompt += "\n\nYour ONLY duty is to analyze the repository URL or codebase provided by the user. Give a comprehensive breakdown of the tech stack, potential architecture, and code quality. Do not provide unrelated step-by-step generic guides.";
       systemPrompt += "\n\nYou MUST format your response beautifully using Markdown (headings, lists, bold text).";
     }
     // Chat / Board Assistant Modes
     else {
-      // Chat / Board Assistant Modes
-      systemPrompt += "\n\nIMPORTANT FORMATTING RULE: You MUST output ONLY plain text and numbers. Do NOT use ANY Markdown formatting whatsoever. Do not use asterisks (*), hashtags (#), bullet points, or any bolding/italics. Keep the output completely unformatted plain text.";
-
       if (mode === 'Chat with Workspace') {
-        systemPrompt += `\nThe user is currently looking at a whiteboard. They have asked a question about it. Here is the current textual representation of the whiteboard's shapes and contents: \n\n<board_context>\n${contextText}\n</board_context>\n\nIMPORTANT: Your ONLY duty is to explain and provide information on the contents of the whiteboard. Do not answer general questions that are unrelated to the whiteboard. Do not mention raw shape types (like "geo shape" or "text shape") unless necessary. Focus entirely on the semantic ideas, the text written, and the concepts presented on the whiteboard. Answer naturally as if you are discussing the concepts themselves.`;
+        systemPrompt += `\n\nThe user is currently looking at a whiteboard. They have asked a question about it. Here is the current textual representation of the whiteboard's shapes and contents: \n\n<board_context>\n${contextText}\n</board_context>\n\nIMPORTANT: Your ONLY duty is to explain and provide information on the contents of the whiteboard. Do not answer general questions that are unrelated to the whiteboard. Focus entirely on the semantic ideas, the text written, and the concepts presented on the whiteboard.`;
       } else if (mode === 'Explain Ideas') {
-        systemPrompt += `\nThe user is currently looking at a whiteboard. Your ONLY duty is to explain the ideas currently present on the whiteboard, provide guidance on how to start, and offer tips on how to explain or present the topic on the board. Do not act like a general encyclopedia. Focus on helping the user expand and present the ideas they have written. Here is the current textual representation of the whiteboard: \n\n<board_context>\n${contextText}\n</board_context>\n\nIMPORTANT: Ignore the technical structure of the board (e.g. do not say "You have a note shape"). Speak directly about the ideas, text, and themes you observe.`;
-      } else if (mode === 'Ask AI') {
-        systemPrompt += `\nYou are a general-purpose AI assistant. You can answer anything the user asks. You are not strictly bound to the whiteboard context. Provide helpful and accurate information.`;
+        systemPrompt += `\n\nThe user is currently looking at a whiteboard. Your ONLY duty is to explain the ideas currently present on the whiteboard, provide guidance on how to start, and offer tips on how to explain or present the topic on the board. Focus on helping the user expand and present the ideas they have written. Here is the current textual representation of the whiteboard: \n\n<board_context>\n${contextText}\n</board_context>`;
+      } else {
+        // Ask AI / General Chat
+        systemPrompt += `\n\nYou are answering in 'Ask AI' mode. Provide complete, accurate, comprehensive, and up-to-date answers to whatever the user asks. Format your response cleanly and readably.`;
       }
     }
 

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Brain, Sparkles, MessageSquare, Lightbulb, Send, Paperclip, Trash2, Maximize2, Minimize2 } from 'lucide-react'
 import { useEditor } from 'tldraw'
 import { useChat, Message } from 'ai/react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const TABS = ['Ask AI', 'Chat with Workspace', 'Explain Ideas']
 
@@ -217,12 +219,20 @@ export default function AIAssistantPanel({ onClose }: { onClose: () => void }) {
               <div 
                 className={`p-3 rounded-2xl text-[14px] leading-relaxed shadow-sm ${
                   m.role === 'user' 
-                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/20 text-white rounded-tr-sm' 
+                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/20 text-white rounded-tr-sm whitespace-pre-wrap' 
                     : 'bg-[#131722]/80 backdrop-blur-md text-slate-200 border border-white/5 rounded-tl-sm'
                 }`}
-                style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                style={{ wordBreak: 'break-word' }}
               >
-                {m.content}
+                {m.role === 'user' ? (
+                  m.content
+                ) : (
+                  <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0.5 text-slate-200">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {m.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
             </div>
           ))
