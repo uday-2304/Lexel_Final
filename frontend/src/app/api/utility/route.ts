@@ -14,13 +14,39 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    const google = createGoogleGenerativeAI({ apiKey });
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const google = createGoogleGenerativeAI({ 
+      apiKey,
+      fetch: async (url, init) => {
+        if (init && init.body && typeof init.body === 'string') {
+          try {
+            const parsed = JSON.parse(init.body);
+            if (!parsed.tools) {
+              parsed.tools = [{ google_search: {} }];
+            } else if (Array.isArray(parsed.tools) && !parsed.tools.some((t: any) => t.google_search || t.googleSearch)) {
+              parsed.tools.push({ google_search: {} });
+            }
+            init = {
+              ...init,
+              body: JSON.stringify(parsed),
+            };
+          } catch (e) {}
+        }
+        return fetch(url, init);
+      },
+    });
     
-    let systemPrompt = '';
+    let systemPrompt = `Current Date: ${currentDate}. You have access to real-time search and up-to-date modern information. `;
     if (mode === 'Text to Flowchart') {
-      systemPrompt = 'You are a strict JSON generator. Convert the user prompt into a flowchart. Output strictly ONLY valid JSON, nothing else. Format: { "nodes": [ {"id": "1", "text": "Step 1"} ], "edges": [ {"from": "1", "to": "2"} ] }';
+      systemPrompt += 'You are a strict JSON generator. Convert the user prompt into a flowchart. Output strictly ONLY valid JSON, nothing else. Format: { "nodes": [ {"id": "1", "text": "Step 1"} ], "edges": [ {"from": "1", "to": "2"} ] }';
     } else {
-      systemPrompt = 'You are a helpful assistant. Generate a concise, useful text response based on the user prompt. This text will be placed on a whiteboard.';
+      systemPrompt += 'You are a helpful assistant. Generate a concise, useful text response based on the user prompt. This text will be placed on a whiteboard.';
     }
 
     const fallbackModels = [

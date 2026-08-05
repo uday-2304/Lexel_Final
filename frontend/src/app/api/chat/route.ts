@@ -18,12 +18,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'API key is required' }, { status: 400 });
     }
 
-    // Initialize Google AI with the provided API key
-    const google = createGoogleGenerativeAI({
-      apiKey,
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
 
-    let systemPrompt = "You are a helpful, creative AI assistant integrated into a collaborative whiteboard called Lexel. Your goal is to help users brainstorm, design, code, and solve problems.";
+    // Initialize Google AI with the provided API key and Google Search Grounding for live web data
+    const google = createGoogleGenerativeAI({
+      apiKey,
+      fetch: async (url, init) => {
+        if (init && init.body && typeof init.body === 'string') {
+          try {
+            const parsed = JSON.parse(init.body);
+            // Enable Google Search Grounding for real-time web access
+            if (!parsed.tools) {
+              parsed.tools = [{ google_search: {} }];
+            } else if (Array.isArray(parsed.tools) && !parsed.tools.some((t: any) => t.google_search || t.googleSearch)) {
+              parsed.tools.push({ google_search: {} });
+            }
+            init = {
+              ...init,
+              body: JSON.stringify(parsed),
+            };
+          } catch (e) {}
+        }
+        return fetch(url, init);
+      },
+    });
+
+    let systemPrompt = `You are a helpful, creative AI assistant integrated into a collaborative whiteboard called Lexel. Your goal is to help users brainstorm, design, code, and solve problems.
+
+CURRENT TIME & KNOWLEDGE INSTRUCTIONS:
+- Today's date is: ${currentDate}.
+- You have real-time Google Search grounding enabled and access to modern, up-to-date information.
+- You are NOT restricted to a 2024 knowledge cutoff. Always provide current, fully updated data, modern library versions, and latest insights.`;
     
     // Project Generator Modes
     if (['Roadmap Document', 'Task Breakdown', 'Project Step-by-Step'].includes(mode)) {
