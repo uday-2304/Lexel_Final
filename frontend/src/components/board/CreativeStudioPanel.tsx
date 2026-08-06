@@ -23,49 +23,59 @@ export default function CreativeStudioPanel({ onClose }: { onClose: () => void }
     try {
       const finalPrompt = input.trim();
       
-      // Pass 'mode' to the backend to specify Icon vs Image
+      let blob: Blob | null = null;
+      let isSvgIcon = false;
+      let iconSvgs: string[] = [];
+
+      const apiKey = typeof window !== 'undefined' ? localStorage.getItem('brainforge_gemini_key') : null;
       const response = await fetch('/api/image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: finalPrompt, mode: activeTab }),
-      })
+        body: JSON.stringify({ prompt: finalPrompt, mode: activeTab, apiKey }),
+      });
+
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.error || 'Failed to generate image.')
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to generate image.');
       }
-      
-      const contentType = response.headers.get('Content-Type') || ''
+
+      const contentType = response.headers.get('Content-Type') || '';
       if (contentType.includes('application/json')) {
-        const data = await response.json()
+        const data = await response.json();
         if (data.icons && data.icons.length > 0) {
-           const files = data.icons.map((svgStr: string, i: number) => {
-              const blob = new Blob([svgStr], { type: 'image/svg+xml' })
-              return new File([blob], `icon-${i}-${Date.now()}.svg`, { type: 'image/svg+xml' })
-           })
-           editor.putExternalContent({
-             type: 'files',
-             files: files,
-             point: editor.getViewportPageBounds().center,
-             ignoreParent: false
-           })
+          isSvgIcon = true;
+          iconSvgs = data.icons;
         }
       } else {
-        // Handle single image blob from Pollinations AI
-        const blob = await response.blob()
-        const extension = blob.type === 'image/svg+xml' ? 'svg' : 'png'
-        const file = new File([blob], `generated-${activeTab.split(' ')[0].toLowerCase()}-${Date.now()}.${extension}`, { type: blob.type })
+        blob = await response.blob();
+      }
+
+      if (isSvgIcon && iconSvgs.length > 0) {
+        const files = iconSvgs.map((svgStr: string, i: number) => {
+          const b = new Blob([svgStr], { type: 'image/svg+xml' });
+          return new File([b], `icon-${i}-${Date.now()}.svg`, { type: 'image/svg+xml' });
+        });
+        editor.putExternalContent({
+          type: 'files',
+          files: files,
+          point: editor.getViewportPageBounds().center,
+          ignoreParent: false
+        });
+      } else if (blob) {
+        const extension = blob.type === 'image/svg+xml' ? 'svg' : 'png';
+        const file = new File([blob], `generated-${activeTab.split(' ')[0].toLowerCase()}-${Date.now()}.${extension}`, { type: blob.type });
         
         editor.putExternalContent({
           type: 'files',
           files: [file],
           point: editor.getViewportPageBounds().center,
           ignoreParent: false
-        })
+        });
       }
       
-      setInput('')
+      setInput('');
     } catch (error: any) {
       console.error(error)
       setErrorMsg(error.message || "Something went wrong.")
